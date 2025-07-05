@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:orientation="vertical">
+
+    <!-- Top section: Score display -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="4dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="#1a1a1a"
+        android:padding="8dp">
+
+        <TextView
+            android:id="@+id/tv_score"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Score: 0"
+            android:textColor="#00FFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginEnd="20dp" />
+
+        <TextView
+            android:id="@+id/tv_lines"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Lines: 0"
+            android:textColor="#FFD700"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/pause_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:text="Pause" />
+
+    </LinearLayout>
+
+    <!-- Main game area - takes most of the space -->
+    <FrameLayout
+        android:id="@+id/gl_surface_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_margin="4dp"
+        android:background="#111111" />
+
+    <!-- Bottom section: Controls -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:background="#1a1a1a"
+        android:gravity="center_vertical">
+
+        <!-- Left side: Virtual Joystick (D-Pad) -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/dpad_container"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_marginEnd="20dp">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="Directional Pad"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_dpad"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Guidelines for a 3x3 grid -->
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline_dpad_v1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.33" />
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline_dpad_v2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.67" />
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline_dpad_h1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.33" />
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline_dpad_h2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.67" />
+
+            <!-- Clickable areas -->
+            <View
+                android:id="@+id/btn_up"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:background="@android:color/transparent"
+                app:layout_constraintBottom_toTopOf="@+id/guideline_dpad_h1"
+                app:layout_constraintEnd_toStartOf="@+id/guideline_dpad_v2"
+                app:layout_constraintStart_toEndOf="@+id/guideline_dpad_v1"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <View
+                android:id="@+id/btn_left"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:background="@android:color/transparent"
+                app:layout_constraintBottom_toBottomOf="@+id/guideline_dpad_h2"
+                app:layout_constraintEnd_toStartOf="@+id/guideline_dpad_v1"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/guideline_dpad_h1" />
+
+            <View
+                android:id="@+id/btn_right"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:background="@android:color/transparent"
+                app:layout_constraintBottom_toBottomOf="@+id/guideline_dpad_h2"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/guideline_dpad_v2"
+                app:layout_constraintTop_toTopOf="@+id/guideline_dpad_h1" />
+
+            <View
+                android:id="@+id/btn_down"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:background="@android:color/transparent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/guideline_dpad_v2"
+                app:layout_constraintStart_toEndOf="@+id/guideline_dpad_v1"
+                app:layout_constraintTop_toTopOf="@+id/guideline_dpad_h2" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- Spacer to push action buttons to the right -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- Right side: Action buttons -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="150dp"
+            android:layout_height="150dp">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="Action Buttons"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_action_buttons"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Guidelines for a 3x3 grid -->
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline_action_v1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.33" />
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline_action_v2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.67" />
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline_action_h1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.33" />
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline_action_h2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.67" />
+
+            <!-- Clickable areas -->
+            <!-- Top button: Y -->
+            <View
+                android:id="@+id/btn_y"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:background="@android:color/transparent"
+                app:layout_constraintBottom_toTopOf="@+id/guideline_action_h1"
+                app:layout_constraintEnd_toStartOf="@+id/guideline_action_v2"
+                app:layout_constraintStart_toEndOf="@+id/guideline_action_v1"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Left button: X -->
+            <View
+                android:id="@+id/btn_x_left"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:background="@android:color/transparent"
+                app:layout_constraintBottom_toBottomOf="@+id/guideline_action_h2"
+                app:layout_constraintEnd_toStartOf="@+id/guideline_action_v1"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/guideline_action_h1" />
+
+            <!-- Right button: A -->
+            <View
+                android:id="@+id/btn_a"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:background="@android:color/transparent"
+                app:layout_constraintBottom_toBottomOf="@+id/guideline_action_h2"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/guideline_action_v2"
+                app:layout_constraintTop_toTopOf="@+id/guideline_action_h1" />
+
+            <!-- Bottom button: B -->
+            <View
+                android:id="@+id/btn_b"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:background="@android:color/transparent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/guideline_action_v2"
+                app:layout_constraintStart_toEndOf="@+id/guideline_action_v1"
+                app:layout_constraintTop_toTopOf="@+id/guideline_action_h2" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </LinearLayout>
+
+    <!-- Game Over Overlay -->
+    <RelativeLayout
+        android:id="@+id/game_over_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:visibility="gone"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/game_over_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Game Over"
+            android:textColor="#FF0000"
+            android:textSize="48sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/restart_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/game_over_text"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:text="Restart"
+            android:textSize="24sp" />
+
+    </RelativeLayout>
+
+    <!-- Pause Overlay -->
+    <RelativeLayout
+        android:id="@+id/pause_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:visibility="gone"
+        android:gravity="center">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Paused"
+            android:textColor="#FFFFFF"
+            android:textSize="48sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/resume_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="80dp"
+            android:text="Resume"
+            android:textSize="24sp" />
+
+    </RelativeLayout>
+
+</LinearLayout> 
