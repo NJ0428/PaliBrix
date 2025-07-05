@@ -125,8 +125,8 @@ void Renderer::render(const Game& game) {
         return;
     }
     
-    // Adjusted coordinate system - make game area taller to show all rows
-    float gameAreaWidth = 18.0f;
+    // Adjusted coordinate system - make game area wider to show UI elements
+    float gameAreaWidth = 20.0f; // Increased width for UI
     float gameAreaHeight = 26.0f; // Increased height to show top rows
     float projection[16];
     createOrthoMatrix(projection, 0.0f, gameAreaWidth, gameAreaHeight, 0.0f, -1.0f, 1.0f);
@@ -148,6 +148,9 @@ void Renderer::render(const Game& game) {
     
     // Draw board border
     drawBorder();
+    
+    // Draw UI elements
+    drawUI(game);
 }
 
 void Renderer::drawBackground() {
@@ -159,6 +162,113 @@ void Renderer::drawBackground() {
     glBindVertexArray(vao_);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
+}
+
+void Renderer::drawNextQueue(const Game& game) {
+    const auto& nextQueue = game.getNextQueue();
+    
+    // Draw background for next queue area
+    blockShader_->setVec3("uColor", 0.2f, 0.2f, 0.2f); // Darker gray
+    blockShader_->setFloat("uAlpha", 0.8f);
+    blockShader_->setVec2("uOffset", 15.0f, 3.0f);
+    blockShader_->setVec2("uScale", 3.0f, 18.0f);
+    
+    glBindVertexArray(vao_);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+    
+    // Draw "NEXT" label background
+    blockShader_->setVec3("uColor", 0.3f, 0.3f, 0.3f);
+    blockShader_->setFloat("uAlpha", 1.0f);
+    blockShader_->setVec2("uOffset", 15.0f, 3.0f);
+    blockShader_->setVec2("uScale", 3.0f, 1.0f);
+    
+    glBindVertexArray(vao_);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+    
+    // Draw each piece in the next queue
+    for (size_t i = 0; i < nextQueue.size() && i < 6; ++i) {
+        float yOffset = 4.5f + i * 2.8f;
+        drawPreviewPiece(nextQueue[i], 15.5f, yOffset, 0.4f);
+    }
+}
+
+void Renderer::drawHoldPiece(const Game& game) {
+    TetrominoType heldPiece = game.getHeldPiece();
+    
+    // Draw background for hold area
+    blockShader_->setVec3("uColor", 0.2f, 0.2f, 0.2f); // Darker gray
+    blockShader_->setFloat("uAlpha", 0.8f);
+    blockShader_->setVec2("uOffset", 0.5f, 3.0f);
+    blockShader_->setVec2("uScale", 3.0f, 4.0f);
+    
+    glBindVertexArray(vao_);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+    
+    // Draw "HOLD" label background
+    blockShader_->setVec3("uColor", 0.3f, 0.3f, 0.3f);
+    blockShader_->setFloat("uAlpha", 1.0f);
+    blockShader_->setVec2("uOffset", 0.5f, 3.0f);
+    blockShader_->setVec2("uScale", 3.0f, 1.0f);
+    
+    glBindVertexArray(vao_);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+    
+    // Draw held piece if it exists
+    if (heldPiece != TetrominoType::EMPTY) {
+        drawPreviewPiece(heldPiece, 1.0f, 4.5f, 0.4f);
+    }
+}
+
+void Renderer::drawPreviewPiece(TetrominoType type, float x, float y, float scale) {
+    if (type == TetrominoType::EMPTY) return;
+    
+    const auto& shape = tetrominoShapes[static_cast<int>(type)][0]; // Always use rotation 0 for preview
+    
+    // Calculate piece bounds for centering
+    int minX = 4, maxX = -1, minY = 4, maxY = -1;
+    for (const auto& mino : shape) {
+        minX = std::min(minX, mino.x);
+        maxX = std::max(maxX, mino.x);
+        minY = std::min(minY, mino.y);
+        maxY = std::max(maxY, mino.y);
+    }
+    
+    // Center the piece in the preview area
+    float centerOffsetX = -(maxX + minX) * scale * 0.5f;
+    float centerOffsetY = -(maxY + minY) * scale * 0.5f;
+    
+    // Set color based on piece type
+    float r=1, g=1, b=1;
+    switch (type) {
+        case TetrominoType::I: r=0.0f; g=1.0f; b=1.0f; break; // Cyan
+        case TetrominoType::O: r=1.0f; g=1.0f; b=0.0f; break; // Yellow
+        case TetrominoType::T: r=0.6f; g=0.2f; b=0.8f; break; // Purple
+        case TetrominoType::J: r=0.0f; g=0.3f; b=1.0f; break; // Blue
+        case TetrominoType::L: r=1.0f; g=0.5f; b=0.0f; break; // Orange
+        case TetrominoType::S: r=0.0f; g=0.8f; b=0.0f; break; // Green
+        case TetrominoType::Z: r=1.0f; g=0.0f; b=0.0f; break; // Red
+        default: return;
+    }
+    
+    blockShader_->setVec3("uColor", r, g, b);
+    blockShader_->setFloat("uAlpha", 1.0f);
+    
+    // Draw each mino of the piece
+    for (const auto& mino : shape) {
+        float blockX = x + centerOffsetX + mino.x * scale;
+        float blockY = y + centerOffsetY + mino.y * scale;
+        
+        blockShader_->setVec2("uOffset", blockX, blockY);
+        blockShader_->setVec2("uScale", scale * 0.9f, scale * 0.9f);
+        
+        glBindVertexArray(vao_);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+    }
 }
 
 void Renderer::drawBorder() {
@@ -208,7 +318,11 @@ void Renderer::drawPiece(const Tetromino& piece, bool isGhost) {
 }
 
 void Renderer::drawUI(const Game& game) {
-    // TODO: Draw the next queue and hold piece
+    // Draw next queue (6 pieces)
+    drawNextQueue(game);
+    
+    // Draw hold piece
+    drawHoldPiece(game);
 }
 
 void Renderer::drawBlock(int x, int y, TetrominoType type, bool isGhost) {

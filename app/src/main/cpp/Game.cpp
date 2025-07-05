@@ -187,7 +187,7 @@ void Game::initializeTetrominoBag() {
     tetrominoBag_ = bag;
     
     // Fill initial next queue
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 6; ++i) {
         nextQueue_.push_back(getNextFromBag());
     }
 }

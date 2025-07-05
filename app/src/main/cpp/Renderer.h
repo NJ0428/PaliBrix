@@ -24,6 +24,9 @@ private:
     void drawBlock(int x, int y, TetrominoType type, bool isGhost = false);
     void drawBackground();
     void drawBorder();
+    void drawNextQueue(const Game& game);
+    void drawHoldPiece(const Game& game);
+    void drawPreviewPiece(TetrominoType type, float x, float y, float scale = 0.5f);
 
     int width_;
     int height_;
