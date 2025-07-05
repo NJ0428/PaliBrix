@@ -34,6 +34,16 @@
             android:text="Lines: 0"
             android:textColor="#FFD700"
             android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginEnd="20dp" />
+
+        <TextView
+            android:id="@+id/tv_level"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Level: 1"
+            android:textColor="#FF69B4"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
         <Button

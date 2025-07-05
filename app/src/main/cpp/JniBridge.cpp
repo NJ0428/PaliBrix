@@ -9,6 +9,28 @@
 static std::unique_ptr<Game> g_game;
 static std::unique_ptr<Renderer> g_renderer;
 
+void checkAndPlayLockSound(JNIEnv* env, jobject thiz) {
+    if (g_game && g_game->wasPieceLocked()) {
+        jclass mainActivityClass = env->GetObjectClass(thiz);
+        jmethodID playLockSoundMethod = env->GetMethodID(mainActivityClass, "playLockSound", "()V");
+        if (playLockSoundMethod != nullptr) {
+            env->CallVoidMethod(thiz, playLockSoundMethod);
+        }
+        g_game->clearPieceLockedFlag();
+    }
+}
+
+void checkAndPlayLineClearSound(JNIEnv* env, jobject thiz) {
+    if (g_game && g_game->wereLinesCleared()) {
+        jclass mainActivityClass = env->GetObjectClass(thiz);
+        jmethodID playLineClearSoundMethod = env->GetMethodID(mainActivityClass, "playLineClearSound", "()V");
+        if (playLineClearSoundMethod != nullptr) {
+            env->CallVoidMethod(thiz, playLineClearSoundMethod);
+        }
+        g_game->clearLinesClearedFlag();
+    }
+}
+
 extern "C" {
 
 JNIEXPORT void JNICALL
@@ -54,6 +76,8 @@ JNIEXPORT void JNICALL
 Java_com_example_palibrix_MainActivity_nativeUpdate(JNIEnv *env, jobject thiz) {
     if (g_game) {
         g_game->update(); // Call game update for automatic dropping
+        checkAndPlayLockSound(env, thiz);
+        checkAndPlayLineClearSound(env, thiz);
     }
 }
 
@@ -63,6 +87,7 @@ JNIEXPORT void JNICALL
 Java_com_example_palibrix_MainActivity_nativeMove(JNIEnv *env, jobject thiz, jint direction) {
     if (g_game) {
         g_game->move(direction);
+        checkAndPlayLockSound(env, thiz);
     }
 }
 
@@ -70,6 +95,7 @@ JNIEXPORT void JNICALL
 Java_com_example_palibrix_MainActivity_nativeRotate(JNIEnv *env, jobject thiz) {
     if (g_game) {
         g_game->rotate();
+        checkAndPlayLockSound(env, thiz);
     }
 }
 
@@ -77,6 +103,7 @@ JNIEXPORT void JNICALL
 Java_com_example_palibrix_MainActivity_nativeRotateLeft(JNIEnv *env, jobject thiz) {
     if (g_game) {
         g_game->rotateLeft();
+        checkAndPlayLockSound(env, thiz);
     }
 }
 
@@ -84,6 +111,8 @@ JNIEXPORT void JNICALL
 Java_com_example_palibrix_MainActivity_nativeSoftDrop(JNIEnv *env, jobject thiz) {
      if (g_game) {
         g_game->softDrop();
+        checkAndPlayLockSound(env, thiz);
+        checkAndPlayLineClearSound(env, thiz);
     }
 }
 
@@ -91,6 +120,8 @@ JNIEXPORT void JNICALL
 Java_com_example_palibrix_MainActivity_nativeHardDrop(JNIEnv *env, jobject thiz) {
      if (g_game) {
         g_game->hardDrop();
+        checkAndPlayLockSound(env, thiz);
+        checkAndPlayLineClearSound(env, thiz);
 
         // Vibrate on hard drop
         jclass mainActivityClass = env->GetObjectClass(thiz);

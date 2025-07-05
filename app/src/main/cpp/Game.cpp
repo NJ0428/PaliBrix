@@ -8,7 +8,7 @@
 
 Game::Game() : board_(BOARD_HEIGHT, std::vector<TetrominoType>(BOARD_WIDTH, TetrominoType::EMPTY)),
                gameOver_(false), score_(0), lines_(0), level_(1), heldPiece_(TetrominoType::EMPTY), canHold_(true),
-               dropTimer_(0.0), dropInterval_(1.0), lastActionWasRotation_(false) { // Start with 1 second interval
+               dropTimer_(0.0), dropInterval_(1.0), lastActionWasRotation_(false), pieceLocked(false), linesClearedFlag(false) { // Start with 1 second interval
     // Initialize random number generator for the bag
     initializeTetrominoBag();
     spawnNewPiece();
@@ -128,8 +128,26 @@ void Game::reset() {
     dropTimer_ = 0.0;
     dropInterval_ = 1.0;
     lastActionWasRotation_ = false;
+    pieceLocked = false;
+    linesClearedFlag = false;
     initializeTetrominoBag();
     spawnNewPiece();
+}
+
+bool Game::wasPieceLocked() const {
+    return pieceLocked;
+}
+
+void Game::clearPieceLockedFlag() {
+    pieceLocked = false;
+}
+
+bool Game::wereLinesCleared() const {
+    return linesClearedFlag;
+}
+
+void Game::clearLinesClearedFlag() {
+    linesClearedFlag = false;
 }
 
 const std::vector<std::vector<TetrominoType>>& Game::getBoard() const {
@@ -264,16 +282,17 @@ bool Game::isValid(const Tetromino& piece) const {
 
 void Game::lockPiece() {
     if (currentPiece_.type == TetrominoType::EMPTY) return;
-
+    
     const auto& shape = tetrominoShapes[static_cast<int>(currentPiece_.type)][currentPiece_.rotation];
     for (const auto& mino : shape) {
         int boardX = currentPiece_.x + mino.x;
         int boardY = currentPiece_.y + mino.y;
-
         if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
             board_[boardY][boardX] = currentPiece_.type;
         }
     }
+    
+    pieceLocked = true; // Set the flag here
 }
 
 void Game::clearLines() {
@@ -342,6 +361,8 @@ void Game::clearLines() {
             // Decrease drop interval as level increases, making the game faster
             dropInterval_ = std::max(0.1, 1.0 - (level_ - 1) * 0.05);
         }
+
+        linesClearedFlag = true; // Set the flag here
     }
 }
 

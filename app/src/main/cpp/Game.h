@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cstdint>
+#include <random>
 
 constexpr int BOARD_WIDTH = 10;
 constexpr int BOARD_HEIGHT = 22; // Standard Tetris is 20 rows visible, with 2 hidden rows above.
@@ -51,6 +52,11 @@ public:
     double getTime() const; // Game time in seconds
     bool isGameOver() const;
 
+    // Sound-related status
+    bool wasPieceLocked() const;
+    void clearPieceLockedFlag();
+    bool wereLinesCleared() const;
+    void clearLinesClearedFlag();
 
 private:
     void spawnNewPiece();
@@ -79,6 +85,12 @@ private:
     double dropInterval_;
     // a timer will be needed
     bool gameOver_;
+
+    bool pieceLocked; // Flag to indicate a piece was just locked
+    bool linesClearedFlag; // Flag to indicate lines were just cleared
+
+    std::mt19937 rng;
+    std::uniform_int_distribution<int> dist;
 };
 
 #endif //PALIBRIX_GAME_H 

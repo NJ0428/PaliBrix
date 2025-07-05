@@ -16,18 +16,24 @@ import javax.microedition.khronos.opengles.GL10
 import android.os.Vibrator
 import android.media.SoundPool
 import android.media.AudioAttributes
+import android.media.MediaPlayer
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var glSurfaceView: GLSurfaceView
     private lateinit var scoreText: TextView
     private lateinit var linesText: TextView
+    private lateinit var levelText: TextView
     private lateinit var gameOverLayout: android.widget.RelativeLayout
     private lateinit var pauseLayout: android.widget.RelativeLayout
     private var isPaused = false
     private lateinit var vibrator: Vibrator
-    // private lateinit var soundPool: SoundPool
-    // private var soundMap: HashMap<String, Int> = HashMap()
+    private var currentLevel = 1
+    private var baseDropSpeed = 150L // 기본 속도 (ms)
+    private var backgroundMusic: MediaPlayer? = null
+    private lateinit var soundPool: SoundPool
+    private var soundMap: HashMap<String, Int> = HashMap()
+    private var gameOverSoundPlayed = false
     
     private val updateHandler = Handler(Looper.getMainLooper())
     
@@ -39,12 +45,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
-    // Game drop timer (300ms for fast dropping)
+    // Game drop timer (dynamic speed based on level)
     private val gameDropRunnable = object : Runnable {
         override fun run() {
             if (!isPaused) {
                 nativeUpdate() // Call native game update for automatic dropping
-                updateHandler.postDelayed(this, 300) // Drop every 300ms (fast speed)
+                val dropSpeed = calculateDropSpeed()
+                updateHandler.postDelayed(this, dropSpeed) // Drop speed based on level
             }
         }
     }
@@ -56,11 +63,12 @@ class MainActivity : AppCompatActivity() {
         // Initialize UI elements
         scoreText = findViewById(R.id.tv_score)
         linesText = findViewById(R.id.tv_lines)
+        levelText = findViewById(R.id.tv_level)
         gameOverLayout = findViewById(R.id.game_over_layout)
         pauseLayout = findViewById(R.id.pause_layout)
         vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 
-        /*
+        // 효과음 초기화
         val audioAttributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_GAME)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
@@ -71,10 +79,15 @@ class MainActivity : AppCompatActivity() {
             .setAudioAttributes(audioAttributes)
             .build()
 
-        soundMap["lock"] = soundPool.load(this, R.raw.lock, 1)
-        soundMap["clear"] = soundPool.load(this, R.raw.clear, 1)
-        soundMap["gameover"] = soundPool.load(this, R.raw.gameover, 1)
-        */
+        soundMap["rotate"] = soundPool.load(this, R.raw.re, 1)
+        soundMap["gameover"] = soundPool.load(this, R.raw.fail, 1)
+        soundMap["click"] = soundPool.load(this, R.raw.click, 1)
+        soundMap["hold"] = soundPool.load(this, R.raw.hole, 1)
+        soundMap["lock"] = soundPool.load(this, R.raw.down, 1)
+        soundMap["clear"] = soundPool.load(this, R.raw.del, 1)
+        
+        // 배경음악 초기화
+        initBackgroundMusic()
         
         // Create and add GLSurfaceView to the container
         glSurfaceView = GameSurfaceView(this)
@@ -92,10 +105,12 @@ class MainActivity : AppCompatActivity() {
         updateHandler.post(gameDropRunnable)
 
         findViewById<Button>(R.id.pause_button).setOnClickListener {
+            playSoundEffect("click")
             togglePause()
         }
 
         findViewById<Button>(R.id.resume_button).setOnClickListener {
+            playSoundEffect("click")
             togglePause()
         }
     }
@@ -159,24 +174,97 @@ class MainActivity : AppCompatActivity() {
 
         // Action buttons in diamond pattern
         findViewById<android.view.View>(R.id.btn_y).setOnClickListener {
-            nativeRotateLeft() // Y: 왼쪽 돌리기 (반시계방향)
+            nativeHold() // Y: 홀드
+            playSoundEffect("hold")
         }
 
         findViewById<android.view.View>(R.id.btn_x_left).setOnClickListener {
             nativeHold() // X (왼쪽): 홀드
+            playSoundEffect("hold")
         }
 
         findViewById<android.view.View>(R.id.btn_a).setOnClickListener {
-            nativeRotate() // A: 오른쪽 돌리기 (시계방향)
+            nativeRotate() // A: 우회전 (시계방향)
+            playSoundEffect("rotate") // 회전 효과음 재생
         }
 
         findViewById<android.view.View>(R.id.btn_b).setOnClickListener {
-            nativeHardDrop() // B: 빨리 내리기
+            nativeRotateLeft() // B: 좌회전 (반시계방향)
+            playSoundEffect("rotate") // 회전 효과음 재생
         }
 
         findViewById<Button>(R.id.restart_button).setOnClickListener {
+            playSoundEffect("click")
             nativeReset()
+            currentLevel = 1 // 레벨 초기화
+            gameOverSoundPlayed = false // 게임 오버 효과음 플래그 초기화
             gameOverLayout.visibility = android.view.View.GONE
+            startBackgroundMusic() // 게임 재시작 시 배경음악 재생
+        }
+    }
+
+    private fun calculateDropSpeed(): Long {
+        // 레벨마다 10ms씩 빨라짐 (최소 50ms)
+        val speed = baseDropSpeed - (currentLevel - 1) * 10
+        return if (speed < 50) 50 else speed
+    }
+
+    private fun initBackgroundMusic() {
+        try {
+            backgroundMusic = MediaPlayer.create(this, R.raw.background)
+            backgroundMusic?.apply {
+                isLooping = true // 반복 재생 설정
+                setVolume(0.5f, 0.5f) // 볼륨 설정 (0.0 ~ 1.0)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun startBackgroundMusic() {
+        try {
+            backgroundMusic?.let { player ->
+                if (!player.isPlaying) {
+                    player.start()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun pauseBackgroundMusic() {
+        try {
+            backgroundMusic?.let { player ->
+                if (player.isPlaying) {
+                    player.pause()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun stopBackgroundMusic() {
+        try {
+            backgroundMusic?.let { player ->
+                if (player.isPlaying) {
+                    player.stop()
+                    player.prepare() // 다시 재생 가능하도록 준비
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun playSoundEffect(soundName: String) {
+        try {
+            soundMap[soundName]?.let { soundId ->
+                soundPool.play(soundId, 1.0f, 1.0f, 1, 0, 1.0f)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -186,14 +274,29 @@ class MainActivity : AppCompatActivity() {
         val lines = nativeGetLines()
         val isGameOver = nativeIsGameOver()
 
+        // 레벨 계산 (10줄마다 레벨 업)
+        val newLevel = (lines / 10) + 1
+        if (newLevel != currentLevel) {
+            currentLevel = newLevel
+            // 레벨이 올라갔을 때 진동 효과
+            vibrator.vibrate(100)
+        }
+
         scoreText.text = "Score: $score"
         linesText.text = "Lines: $lines"
+        levelText.text = "Level: $currentLevel"
 
         if (isGameOver) {
             gameOverLayout.visibility = android.view.View.VISIBLE
             updateHandler.removeCallbacks(gameDropRunnable)
+            stopBackgroundMusic() // 게임 오버 시 음악 정지
+            if (!gameOverSoundPlayed) {
+                playSoundEffect("gameover") // 게임 오버 효과음 재생
+                gameOverSoundPlayed = true
+            }
         } else {
             gameOverLayout.visibility = android.view.View.GONE
+            gameOverSoundPlayed = false // 게임 오버 상태가 아니면 플래그 초기화
         }
     }
 
@@ -202,9 +305,11 @@ class MainActivity : AppCompatActivity() {
         if (isPaused) {
             updateHandler.removeCallbacks(gameDropRunnable)
             pauseLayout.visibility = android.view.View.VISIBLE
+            pauseBackgroundMusic() // 일시정지 시 음악 일시정지
         } else {
             updateHandler.post(gameDropRunnable)
             pauseLayout.visibility = android.view.View.GONE
+            startBackgroundMusic() // 재개 시 음악 재생
         }
     }
 
@@ -214,6 +319,7 @@ class MainActivity : AppCompatActivity() {
         isPaused = false
         pauseLayout.visibility = android.view.View.GONE
         updateHandler.post(gameDropRunnable)
+        startBackgroundMusic() // 게임 재개 시 음악 재생
     }
 
     override fun onPause() {
@@ -221,18 +327,40 @@ class MainActivity : AppCompatActivity() {
         glSurfaceView.onPause()
         isPaused = true
         updateHandler.removeCallbacks(gameDropRunnable)
+        pauseBackgroundMusic() // 게임 일시정지 시 음악 일시정지
     }
 
     override fun onDestroy() {
         super.onDestroy()
         updateHandler.removeCallbacks(uiUpdateRunnable)
         updateHandler.removeCallbacks(gameDropRunnable)
+        
+        // 배경음악 정리
+        backgroundMusic?.let { player ->
+            if (player.isPlaying) {
+                player.stop()
+            }
+            player.release()
+        }
+        backgroundMusic = null
+
+        // 효과음 정리
+        soundPool.release()
+        
         // It's important to call the native cleanup function
         nativeOnDestroy()
     }
 
     fun vibrate(milliseconds: Long) {
         vibrator.vibrate(milliseconds)
+    }
+
+    fun playLockSound() {
+        playSoundEffect("lock")
+    }
+
+    fun playLineClearSound() {
+        playSoundEffect("clear")
     }
 
     // --- Native Methods ---
