@@ -24,6 +24,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scoreText: TextView
     private lateinit var linesText: TextView
     private lateinit var levelText: TextView
+    private lateinit var scoreTextBottom: TextView
+    private lateinit var linesTextBottom: TextView
+    private lateinit var levelTextBottom: TextView
+    private lateinit var comboTextBottom: TextView
     private lateinit var gameOverLayout: android.widget.RelativeLayout
     private lateinit var pauseLayout: android.widget.RelativeLayout
     private var isPaused = false
@@ -64,6 +68,10 @@ class MainActivity : AppCompatActivity() {
         scoreText = findViewById(R.id.tv_score)
         linesText = findViewById(R.id.tv_lines)
         levelText = findViewById(R.id.tv_level)
+        scoreTextBottom = findViewById(R.id.tv_score_bottom)
+        linesTextBottom = findViewById(R.id.tv_lines_bottom)
+        levelTextBottom = findViewById(R.id.tv_level_bottom)
+        comboTextBottom = findViewById(R.id.tv_combo_bottom)
         gameOverLayout = findViewById(R.id.game_over_layout)
         pauseLayout = findViewById(R.id.pause_layout)
         vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
@@ -92,7 +100,7 @@ class MainActivity : AppCompatActivity() {
         // Create and add GLSurfaceView to the container
         glSurfaceView = GameSurfaceView(this)
         val container = findViewById<FrameLayout>(R.id.gl_surface_container)
-        container.addView(glSurfaceView)
+        container.addView(glSurfaceView, 0)
 
         // Setup button listeners
         setupControlButtons()
@@ -272,6 +280,7 @@ class MainActivity : AppCompatActivity() {
         // Get score and lines from native code
         val score = nativeGetScore()
         val lines = nativeGetLines()
+        val combo = nativeGetCombo()
         val isGameOver = nativeIsGameOver()
 
         // 레벨 계산 (10줄마다 레벨 업)
@@ -282,9 +291,16 @@ class MainActivity : AppCompatActivity() {
             vibrator.vibrate(100)
         }
 
+        // Update top UI
         scoreText.text = "Score: $score"
         linesText.text = "Lines: $lines"
         levelText.text = "Level: $currentLevel"
+        
+        // Update bottom UI (more prominent display)
+        scoreTextBottom.text = "SCORE\n   $score"
+        linesTextBottom.text = "LINES\n   $lines"
+        levelTextBottom.text = "LEVEL\n   $currentLevel"
+        comboTextBottom.text = "COMBO\n   $combo"
 
         if (isGameOver) {
             gameOverLayout.visibility = android.view.View.VISIBLE
@@ -379,6 +395,7 @@ class MainActivity : AppCompatActivity() {
     private external fun nativeReset()
     private external fun nativeGetScore(): Int
     private external fun nativeGetLines(): Int
+    private external fun nativeGetCombo(): Int
     private external fun nativeIsGameOver(): Boolean
 
     companion object {

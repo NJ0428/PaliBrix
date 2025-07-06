@@ -62,7 +62,62 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:layout_margin="4dp"
-        android:background="#111111" />
+        android:background="#111111">
+
+        <!-- Stats overlay under Hold area -->
+        <LinearLayout
+            android:id="@+id/stats_overlay"
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start|top"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="160dp"
+            android:padding="4dp"
+            android:background="#66000000">
+
+            <TextView
+                android:id="@+id/tv_score_bottom"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Score: 0"
+                android:textColor="#00FFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="2dp" />
+
+            <TextView
+                android:id="@+id/tv_lines_bottom"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Lines: 0"
+                android:textColor="#FFD700"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="2dp" />
+
+            <TextView
+                android:id="@+id/tv_level_bottom"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Level: 1"
+                android:textColor="#FF69B4"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="2dp" />
+
+            <TextView
+                android:id="@+id/tv_combo_bottom"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Combo: 0"
+                android:textColor="#00FF00"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+    </FrameLayout>
 
     <!-- Bottom section: Controls -->
     <LinearLayout

@@ -8,7 +8,8 @@
 
 Game::Game() : board_(BOARD_HEIGHT, std::vector<TetrominoType>(BOARD_WIDTH, TetrominoType::EMPTY)),
                gameOver_(false), score_(0), lines_(0), level_(1), heldPiece_(TetrominoType::EMPTY), canHold_(true),
-               dropTimer_(0.0), dropInterval_(1.0), lastActionWasRotation_(false), pieceLocked(false), linesClearedFlag(false) { // Start with 1 second interval
+               dropTimer_(0.0), dropInterval_(1.0), lastActionWasRotation_(false), pieceLocked(false), linesClearedFlag(false),
+               comboCount_(0), lastLinesClearedCount_(0), softDropDistance_(0), hardDropDistance_(0) { // Start with 1 second interval
     // Initialize random number generator for the bag
     initializeTetrominoBag();
     spawnNewPiece();
@@ -76,6 +77,7 @@ void Game::softDrop() {
         currentPiece_ = newPiece;
         updateGhostPiece();
         lastActionWasRotation_ = false;
+        softDropDistance_++; // Track soft drop distance for scoring
     } else {
         // Piece can't move down anymore, lock it
         lockPiece();
@@ -88,10 +90,13 @@ void Game::softDrop() {
 void Game::hardDrop() {
     if (gameOver_) return;
     
+    int dropDistance = 0;
     while (isValid(currentPiece_)) {
         currentPiece_.y++;
+        dropDistance++;
     }
     currentPiece_.y--; // Move back to last valid position
+    hardDropDistance_ = dropDistance;
     
     lockPiece();
     clearLines();
@@ -130,6 +135,10 @@ void Game::reset() {
     lastActionWasRotation_ = false;
     pieceLocked = false;
     linesClearedFlag = false;
+    comboCount_ = 0;
+    lastLinesClearedCount_ = 0;
+    softDropDistance_ = 0;
+    hardDropDistance_ = 0;
     initializeTetrominoBag();
     spawnNewPiece();
 }
@@ -180,6 +189,10 @@ int Game::getLines() const {
 
 int Game::getLevel() const {
     return level_;
+}
+
+int Game::getCombo() const {
+    return comboCount_;
 }
 
 double Game::getTime() const {
@@ -333,8 +346,23 @@ void Game::clearLines() {
         }
     }
     
+    // Add drop scores (soft drop: 1 point per cell, hard drop: 2 points per cell)
+    score_ += softDropDistance_ * 1; // 1 point per soft drop cell
+    score_ += hardDropDistance_ * 2; // 2 points per hard drop cell
+    
+    // Reset drop distances
+    softDropDistance_ = 0;
+    hardDropDistance_ = 0;
+    
     if (linesCleared > 0 || tSpin) {
         lines_ += linesCleared;
+
+        // Combo system - increase combo count if lines were cleared
+        if (linesCleared > 0) {
+            comboCount_++;
+        } else {
+            comboCount_ = 0; // Reset combo if no lines cleared
+        }
 
         // Scoring based on lines cleared at once
         int baseScore = 0;
@@ -353,7 +381,17 @@ void Game::clearLines() {
                 case 4: baseScore = 800; break; // Tetris
             }
         }
-        score_ += baseScore * level_;
+        
+        // Apply level multiplier
+        int levelMultipliedScore = baseScore * level_;
+        
+        // Add combo bonus (50 points * combo count * level)
+        int comboBonus = 0;
+        if (comboCount_ > 1) {
+            comboBonus = 50 * (comboCount_ - 1) * level_;
+        }
+        
+        score_ += levelMultipliedScore + comboBonus;
 
         // Increase level every 10 lines
         if (lines_ / 10 >= level_) {
@@ -363,6 +401,11 @@ void Game::clearLines() {
         }
 
         linesClearedFlag = true; // Set the flag here
+        lastLinesClearedCount_ = linesCleared; // Store for future reference
+    } else {
+        // No lines cleared, reset combo
+        comboCount_ = 0;
+        lastLinesClearedCount_ = 0;
     }
 }
 

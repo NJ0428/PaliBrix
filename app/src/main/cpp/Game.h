@@ -49,6 +49,7 @@ public:
     int getScore() const;
     int getLines() const;
     int getLevel() const;
+    int getCombo() const;
     double getTime() const; // Game time in seconds
     bool isGameOver() const;
 
@@ -88,6 +89,14 @@ private:
 
     bool pieceLocked; // Flag to indicate a piece was just locked
     bool linesClearedFlag; // Flag to indicate lines were just cleared
+    
+    // Combo system
+    int comboCount_;
+    int lastLinesClearedCount_;
+    
+    // Drop scoring
+    int softDropDistance_;
+    int hardDropDistance_;
 
     std::mt19937 rng;
     std::uniform_int_distribution<int> dist;

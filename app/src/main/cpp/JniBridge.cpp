@@ -156,6 +156,14 @@ Java_com_example_palibrix_MainActivity_nativeGetLines(JNIEnv *env, jobject thiz)
     return 0;
 }
 
+JNIEXPORT jint JNICALL
+Java_com_example_palibrix_MainActivity_nativeGetCombo(JNIEnv *env, jobject thiz) {
+    if (g_game) {
+        return g_game->getCombo();
+    }
+    return 0;
+}
+
 JNIEXPORT jboolean JNICALL
 Java_com_example_palibrix_MainActivity_nativeIsGameOver(JNIEnv *env, jobject thiz) {
     if (g_game) {
